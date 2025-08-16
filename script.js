@@ -7,14 +7,48 @@ const CONFIG = {
     storageKey: 'hobbyTrackerData'
 };
 
-// Real Cloud Sync using simple HTTP storage
-let isCloudEnabled = false;
-let syncUrl = 'https://httpbin.org/json'; // Simple storage endpoint
-let cloudData = null;
+// Firestore Real-Time Sync Configuration
+let isFirestoreEnabled = false;
+let db = null;
+let unsubscribe = null;
+const USER_ID = 'cat-threepees-user'; // Cat's unique ID
 
-function initCloudSync() {
-    isCloudEnabled = true;
-    console.log('☁️ Simple cloud sync enabled!');
+// Firebase Config (you'll need to replace with your actual config)
+const firebaseConfig = {
+    apiKey: "your-api-key-here",
+    authDomain: "your-project.firebaseapp.com",
+    projectId: "your-project-id",
+    storageBucket: "your-project.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "your-app-id"
+};
+
+async function initFirestore() {
+    try {
+        // Check if Firebase is available
+        if (typeof firebase === 'undefined') {
+            console.log('⚠️ Firebase not loaded, using local storage');
+            return false;
+        }
+
+        // Initialize Firebase
+        if (!firebase.apps.length) {
+            firebase.initializeApp(firebaseConfig);
+        }
+        
+        db = firebase.firestore();
+        isFirestoreEnabled = true;
+        
+        console.log('🔥 Firestore initialized successfully');
+        
+        // Set up real-time listener
+        setupRealtimeSync();
+        
+        return true;
+    } catch (error) {
+        console.error('🔥 Firestore init failed:', error);
+        return false;
+    }
 }
 
 // Venue data for each activity - All verified real locations
@@ -152,8 +186,10 @@ let appData = {
 };
 
 // Initialize app when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', async function() {
     if (window.location.pathname.includes('dashboard.html')) {
+        // Initialize Firestore first, then dashboard
+        await initFirestore();
         initDashboard();
     } else {
         initLogin();
@@ -237,37 +273,69 @@ async function initDashboard() {
     setupVenues();
 }
 
+function setupRealtimeSync() {
+    if (!isFirestoreEnabled || !db) return;
+    
+    const userRef = db.collection('userData').doc(USER_ID);
+    
+    // Real-time listener for data changes
+    unsubscribe = userRef.onSnapshot((doc) => {
+        if (doc.exists) {
+            const firestoreData = doc.data();
+            console.log('🔥 Received real-time update:', firestoreData);
+            
+            // Only update if data is different (avoid infinite loops)
+            if (JSON.stringify(appData) !== JSON.stringify(firestoreData)) {
+                appData = { ...appData, ...firestoreData };
+                updateProgressBars();
+                showSyncStatus('🔥 Synced');
+            }
+        }
+    }, (error) => {
+        console.error('🔥 Real-time sync error:', error);
+        showSyncStatus('❌ Sync error');
+    });
+}
+
 async function loadData() {
     showSyncStatus('🔄 Loading...');
     
-    // Check for data in URL (for instant sync)
-    const urlParams = new URLSearchParams(window.location.search);
-    const syncData = urlParams.get('data');
-    
-    if (syncData) {
+    // Try Firestore first
+    if (isFirestoreEnabled && db) {
         try {
-            const decoded = atob(syncData);
-            const importedData = JSON.parse(decoded);
-            appData = { ...appData, ...importedData };
-            console.log('🔗 Loaded from URL sync:', appData);
-            showSyncStatus('🔗 URL synced');
-            // Save this imported data locally
-            localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData));
-            // Clean URL without refreshing
-            window.history.replaceState({}, document.title, window.location.pathname);
-            return;
-        } catch (e) {
-            console.warn('URL sync data invalid, using local storage');
+            const userRef = db.collection('userData').doc(USER_ID);
+            const doc = await userRef.get();
+            
+            if (doc.exists) {
+                const firestoreData = doc.data();
+                appData = { ...appData, ...firestoreData };
+                console.log('🔥 Loaded from Firestore:', appData);
+                showSyncStatus('🔥 Cloud loaded');
+                
+                // Save to local as backup
+                localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData));
+                return;
+            } else {
+                console.log('🔥 No Firestore data found, checking local storage');
+            }
+        } catch (error) {
+            console.error('🔥 Firestore load error:', error);
+            showSyncStatus('❌ Cloud error');
         }
     }
     
-    // Load from local storage
+    // Fallback to local storage
     const saved = localStorage.getItem(CONFIG.storageKey);
     if (saved) {
         try {
             appData = { ...appData, ...JSON.parse(saved) };
             console.log('💾 Loaded from local storage');
             showSyncStatus('📱 Local data');
+            
+            // If we have local data but Firestore is enabled, sync it up
+            if (isFirestoreEnabled && db) {
+                saveToFirestore();
+            }
         } catch (e) {
             console.warn('Could not load saved data, using defaults');
             showSyncStatus('🆕 New start');
@@ -278,30 +346,33 @@ async function loadData() {
 }
 
 async function saveData() {
-    // Save locally
+    // Always save locally first (instant)
     localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData));
-    showSyncStatus('💾 Saved');
     
-    // Update sync URL (for manual sharing between devices)
-    updateSyncUrl();
+    // Save to Firestore for real-time sync
+    if (isFirestoreEnabled && db) {
+        await saveToFirestore();
+    } else {
+        showSyncStatus('💾 Local saved');
+    }
 }
 
-function updateSyncUrl() {
-    // Create a sync URL that can be shared between devices
-    const encoded = btoa(JSON.stringify(appData));
-    const syncUrl = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
+async function saveToFirestore() {
+    if (!isFirestoreEnabled || !db) return;
     
-    // Store sync URL for the sync button
-    window.currentSyncUrl = syncUrl;
-    
-    console.log('🔗 Sync URL updated');
+    try {
+        showSyncStatus('🔄 Syncing...');
+        const userRef = db.collection('userData').doc(USER_ID);
+        await userRef.set(appData);
+        console.log('🔥 Saved to Firestore successfully');
+        showSyncStatus('🔥 Synced');
+    } catch (error) {
+        console.error('🔥 Firestore save error:', error);
+        showSyncStatus('❌ Sync failed');
+    }
 }
 
 function showSyncOptions() {
-    if (!window.currentSyncUrl) {
-        updateSyncUrl();
-    }
-    
     const modal = document.createElement('div');
     modal.style.cssText = `
         position: fixed;
@@ -316,49 +387,27 @@ function showSyncOptions() {
         z-index: 2000;
     `;
     
+    const syncStatus = isFirestoreEnabled ? '🔥 Real-time sync enabled' : '❌ Cloud sync disabled';
+    const description = isFirestoreEnabled ? 
+        'Your progress automatically syncs across all devices in real-time!' : 
+        'Connect to enable automatic sync between devices.';
+    
     modal.innerHTML = `
         <div style="background: white; padding: 30px; border-radius: 20px; max-width: 400px; text-align: center;">
-            <h3>📱💻 Sync Between Devices</h3>
-            <p>Copy this link and open it on your other device:</p>
-            <div style="background: #f5f5f5; padding: 15px; border-radius: 10px; margin: 15px 0; word-break: break-all; font-size: 12px;">
-                ${window.currentSyncUrl}
+            <h3>📱💻 Cross-Device Sync</h3>
+            <div style="margin: 20px 0; padding: 15px; background: ${isFirestoreEnabled ? '#e8f5e8' : '#fff3cd'}; border-radius: 10px;">
+                <div style="font-size: 18px; margin-bottom: 10px;">${syncStatus}</div>
+                <div>${description}</div>
             </div>
-            <div style="margin: 20px 0;">
-                <button onclick="copyToClipboard('${window.currentSyncUrl}')" style="background: #667eea; color: white; border: none; padding: 12px 20px; border-radius: 25px; margin: 5px; cursor: pointer;">📋 Copy Link</button>
-                <button onclick="shareSync()" style="background: #27ae60; color: white; border: none; padding: 12px 20px; border-radius: 25px; margin: 5px; cursor: pointer;">📤 Share</button>
-            </div>
-            <button onclick="this.parentElement.parentElement.remove()" style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 15px; cursor: pointer;">✕ Close</button>
+            ${isFirestoreEnabled ? 
+                '<p style="color: #27ae60;">✅ Changes sync automatically!</p>' : 
+                '<p style="color: #856404;">⚠️ Setup required for full sync</p>'
+            }
+            <button onclick="this.parentElement.parentElement.remove()" style="background: #667eea; color: white; border: none; padding: 12px 20px; border-radius: 25px; cursor: pointer;">✕ Close</button>
         </div>
     `;
     
     document.body.appendChild(modal);
-}
-
-function copyToClipboard(text) {
-    navigator.clipboard.writeText(text).then(() => {
-        showSyncStatus('📋 Link copied!');
-    }).catch(() => {
-        // Fallback for older browsers
-        const textArea = document.createElement('textarea');
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
-        document.execCommand('copy');
-        document.body.removeChild(textArea);
-        showSyncStatus('📋 Link copied!');
-    });
-}
-
-function shareSync() {
-    if (navigator.share) {
-        navigator.share({
-            title: 'My Hobby Progress - Threepees',
-            text: 'Check out my hobby tracking progress!',
-            url: window.currentSyncUrl
-        });
-    } else {
-        copyToClipboard(window.currentSyncUrl);
-    }
 }
 
 function showSyncStatus(message) {
