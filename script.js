@@ -41,8 +41,7 @@ async function initFirestore() {
         
         console.log('🔥 Firestore initialized successfully');
         
-        // Set up real-time listener
-        setupRealtimeSync();
+        // Don't set up listener here - do it after initial data load
         
         return true;
     } catch (error) {
@@ -290,6 +289,8 @@ function setupRealtimeSync() {
                 updateProgressBars();
                 showSyncStatus('🔥 Synced');
             }
+        } else {
+            console.log('🔥 No Firestore document exists yet');
         }
     }, (error) => {
         console.error('🔥 Real-time sync error:', error);
@@ -314,6 +315,9 @@ async function loadData() {
                 
                 // Save to local as backup
                 localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData));
+                
+                // NOW set up real-time listener after successful load
+                setupRealtimeSync();
                 return;
             } else {
                 console.log('🔥 No Firestore data found, checking local storage');
@@ -334,7 +338,9 @@ async function loadData() {
             
             // If we have local data but Firestore is enabled, sync it up
             if (isFirestoreEnabled && db) {
-                saveToFirestore();
+                await saveToFirestore();
+                // Set up real-time listener after we've synced our local data
+                setupRealtimeSync();
             }
         } catch (e) {
             console.warn('Could not load saved data, using defaults');
@@ -342,6 +348,10 @@ async function loadData() {
         }
     } else {
         showSyncStatus('🆕 New start');
+        // For new users, set up real-time listener too
+        if (isFirestoreEnabled && db) {
+            setupRealtimeSync();
+        }
     }
 }
 
