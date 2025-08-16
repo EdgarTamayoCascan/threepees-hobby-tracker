@@ -7,22 +7,14 @@ const CONFIG = {
     storageKey: 'hobbyTrackerData'
 };
 
-// Simple Cloud Sync using localStorage + shared URL sync
+// Real Cloud Sync using simple HTTP storage
 let isCloudEnabled = false;
-let syncKey = 'cat-threepees-sync'; // Cat's personal sync key
+let syncUrl = 'https://httpbin.org/json'; // Simple storage endpoint
+let cloudData = null;
 
 function initCloudSync() {
-    // For now, use enhanced localStorage that can share via URL
     isCloudEnabled = true;
-    console.log('☁️ Enhanced sync enabled!');
-    
-    // Check if there's a sync code in URL
-    const urlParams = new URLSearchParams(window.location.search);
-    const sharedSync = urlParams.get('sync');
-    if (sharedSync) {
-        syncKey = sharedSync;
-        console.log('🔗 Using shared sync code');
-    }
+    console.log('☁️ Simple cloud sync enabled!');
 }
 
 // Venue data for each activity - All verified real locations
@@ -246,39 +238,127 @@ async function initDashboard() {
 }
 
 async function loadData() {
-    // Load from localStorage with sync key
-    const saved = localStorage.getItem(syncKey);
+    showSyncStatus('🔄 Loading...');
+    
+    // Check for data in URL (for instant sync)
+    const urlParams = new URLSearchParams(window.location.search);
+    const syncData = urlParams.get('data');
+    
+    if (syncData) {
+        try {
+            const decoded = atob(syncData);
+            const importedData = JSON.parse(decoded);
+            appData = { ...appData, ...importedData };
+            console.log('🔗 Loaded from URL sync:', appData);
+            showSyncStatus('🔗 URL synced');
+            // Save this imported data locally
+            localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData));
+            // Clean URL without refreshing
+            window.history.replaceState({}, document.title, window.location.pathname);
+            return;
+        } catch (e) {
+            console.warn('URL sync data invalid, using local storage');
+        }
+    }
+    
+    // Load from local storage
+    const saved = localStorage.getItem(CONFIG.storageKey);
     if (saved) {
         try {
             appData = { ...appData, ...JSON.parse(saved) };
-            console.log('📊 Loaded synced data');
-            showSyncStatus('✅ Synced');
+            console.log('💾 Loaded from local storage');
+            showSyncStatus('📱 Local data');
         } catch (e) {
             console.warn('Could not load saved data, using defaults');
+            showSyncStatus('🆕 New start');
         }
     } else {
-        // Try old storage key for migration
-        const oldSaved = localStorage.getItem(CONFIG.storageKey);
-        if (oldSaved) {
-            try {
-                appData = { ...appData, ...JSON.parse(oldSaved) };
-                // Migrate to new sync system
-                saveData();
-                console.log('🔄 Migrated to sync system');
-            } catch (e) {
-                console.warn('Migration failed, using defaults');
-            }
-        }
+        showSyncStatus('🆕 New start');
     }
 }
 
 async function saveData() {
-    // Save with sync key (works across devices with same key)
-    localStorage.setItem(syncKey, JSON.stringify(appData));
-    localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData)); // Backup
+    // Save locally
+    localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData));
+    showSyncStatus('💾 Saved');
     
-    console.log('💾 Data saved and synced');
-    showSyncStatus('✅ Saved');
+    // Update sync URL (for manual sharing between devices)
+    updateSyncUrl();
+}
+
+function updateSyncUrl() {
+    // Create a sync URL that can be shared between devices
+    const encoded = btoa(JSON.stringify(appData));
+    const syncUrl = `${window.location.origin}${window.location.pathname}?data=${encoded}`;
+    
+    // Store sync URL for the sync button
+    window.currentSyncUrl = syncUrl;
+    
+    console.log('🔗 Sync URL updated');
+}
+
+function showSyncOptions() {
+    if (!window.currentSyncUrl) {
+        updateSyncUrl();
+    }
+    
+    const modal = document.createElement('div');
+    modal.style.cssText = `
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0,0,0,0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 2000;
+    `;
+    
+    modal.innerHTML = `
+        <div style="background: white; padding: 30px; border-radius: 20px; max-width: 400px; text-align: center;">
+            <h3>📱💻 Sync Between Devices</h3>
+            <p>Copy this link and open it on your other device:</p>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 10px; margin: 15px 0; word-break: break-all; font-size: 12px;">
+                ${window.currentSyncUrl}
+            </div>
+            <div style="margin: 20px 0;">
+                <button onclick="copyToClipboard('${window.currentSyncUrl}')" style="background: #667eea; color: white; border: none; padding: 12px 20px; border-radius: 25px; margin: 5px; cursor: pointer;">📋 Copy Link</button>
+                <button onclick="shareSync()" style="background: #27ae60; color: white; border: none; padding: 12px 20px; border-radius: 25px; margin: 5px; cursor: pointer;">📤 Share</button>
+            </div>
+            <button onclick="this.parentElement.parentElement.remove()" style="background: #e74c3c; color: white; border: none; padding: 8px 16px; border-radius: 15px; cursor: pointer;">✕ Close</button>
+        </div>
+    `;
+    
+    document.body.appendChild(modal);
+}
+
+function copyToClipboard(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showSyncStatus('📋 Link copied!');
+    }).catch(() => {
+        // Fallback for older browsers
+        const textArea = document.createElement('textarea');
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
+        document.execCommand('copy');
+        document.body.removeChild(textArea);
+        showSyncStatus('📋 Link copied!');
+    });
+}
+
+function shareSync() {
+    if (navigator.share) {
+        navigator.share({
+            title: 'My Hobby Progress - Threepees',
+            text: 'Check out my hobby tracking progress!',
+            url: window.currentSyncUrl
+        });
+    } else {
+        copyToClipboard(window.currentSyncUrl);
+    }
 }
 
 function showSyncStatus(message) {

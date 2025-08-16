@@ -173,10 +173,15 @@ body {
     font-size: 1.1rem;
 }
 
-.logout-btn {
+.header-buttons {
     position: absolute;
     top: 0;
     right: 0;
+    display: flex;
+    gap: 10px;
+}
+
+.sync-btn, .logout-btn {
     background: rgba(255, 255, 255, 0.9);
     border: 1px solid #e8ecf0;
     padding: 8px 16px;
@@ -186,9 +191,20 @@ body {
     font-size: 0.9rem;
 }
 
-.logout-btn:hover {
+.sync-btn:hover, .logout-btn:hover {
     background: white;
     box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.sync-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+}
+
+.sync-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3);
 }
 
 .activities-grid {
