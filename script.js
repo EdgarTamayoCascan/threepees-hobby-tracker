@@ -7,6 +7,35 @@ const CONFIG = {
     storageKey: 'hobbyTrackerData'
 };
 
+// Firebase configuration
+const firebaseConfig = {
+    apiKey: "AIzaSyDummy-Replace-With-Real-Key",
+    authDomain: "threepees-hobby-tracker.firebaseapp.com",
+    databaseURL: "https://threepees-hobby-tracker-default-rtdb.firebaseio.com",
+    projectId: "threepees-hobby-tracker",
+    storageBucket: "threepees-hobby-tracker.appspot.com",
+    messagingSenderId: "123456789",
+    appId: "1:123456789:web:dummy"
+};
+
+// Initialize Firebase (will be replaced with real config)
+let database = null;
+let isCloudEnabled = false;
+
+function initFirebase() {
+    try {
+        if (typeof firebase !== 'undefined') {
+            firebase.initializeApp(firebaseConfig);
+            database = firebase.database();
+            isCloudEnabled = true;
+            console.log('🔥 Cloud sync enabled!');
+        }
+    } catch (error) {
+        console.log('📱 Using local storage only');
+        isCloudEnabled = false;
+    }
+}
+
 // Venue data for each activity - All verified real locations
 const VENUES = {
     piano: [
@@ -204,15 +233,18 @@ function redirectToDashboard() {
 }
 
 // Dashboard functionality
-function initDashboard() {
+async function initDashboard() {
     // Check if logged in
     if (!isLoggedIn()) {
         window.location.href = 'index.html';
         return;
     }
 
-    // Load data from localStorage
-    loadData();
+    // Initialize Firebase
+    initFirebase();
+    
+    // Load data (cloud + local)
+    await loadData();
     
     // Initialize all displays
     updateAllDisplays();
@@ -224,19 +256,79 @@ function initDashboard() {
     setupVenues();
 }
 
-function loadData() {
+async function loadData() {
+    // Try cloud first, fall back to local storage
+    if (isCloudEnabled && database) {
+        try {
+            const snapshot = await database.ref('hobbyData').once('value');
+            const cloudData = snapshot.val();
+            if (cloudData) {
+                appData = { ...appData, ...cloudData };
+                console.log('📊 Loaded data from cloud');
+                return;
+            }
+        } catch (error) {
+            console.log('☁️ Cloud load failed, using local storage');
+        }
+    }
+    
+    // Local storage fallback
     const saved = localStorage.getItem(CONFIG.storageKey);
     if (saved) {
         try {
             appData = { ...appData, ...JSON.parse(saved) };
+            console.log('💾 Loaded data from local storage');
         } catch (e) {
             console.warn('Could not load saved data, using defaults');
         }
     }
 }
 
-function saveData() {
+async function saveData() {
+    // Save to local storage first (always works)
     localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData));
+    
+    // Also save to cloud if available
+    if (isCloudEnabled && database) {
+        try {
+            await database.ref('hobbyData').set(appData);
+            console.log('☁️ Data synced to cloud');
+            showSyncStatus('✅ Synced');
+        } catch (error) {
+            console.log('❌ Cloud sync failed');
+            showSyncStatus('📱 Local only');
+        }
+    }
+}
+
+function showSyncStatus(message) {
+    // Create or update sync status indicator
+    let statusElement = document.getElementById('sync-status');
+    if (!statusElement) {
+        statusElement = document.createElement('div');
+        statusElement.id = 'sync-status';
+        statusElement.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0,0,0,0.8);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            z-index: 1000;
+            transition: opacity 0.3s ease;
+        `;
+        document.body.appendChild(statusElement);
+    }
+    
+    statusElement.textContent = message;
+    statusElement.style.opacity = '1';
+    
+    // Hide after 2 seconds
+    setTimeout(() => {
+        statusElement.style.opacity = '0';
+    }, 2000);
 }
 
 function updateCount(activity, change) {
