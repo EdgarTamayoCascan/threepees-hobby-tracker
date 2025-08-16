@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Hobby Journey 🎹🏺🧘‍♀️</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="dashboard-page">
+    <div class="dashboard-container">
+        <header class="dashboard-header">
+            <h1>Your Creative Journey</h1>
+            <p>Track your progress, discover amazing places nearby</p>
+            <button class="logout-btn" onclick="logout()">✨ Logout</button>
+        </header>
+        
+        <div class="activities-grid">
+            <!-- Piano Section -->
+            <div class="activity-card piano-card">
+                <div class="activity-header">
+                    <div class="activity-icon">
+                        <svg viewBox="0 0 100 60" class="icon">
+                            <rect x="10" y="20" width="80" height="30" fill="#2c3e50" rx="2"/>
+                            <rect x="15" y="25" width="70" height="20" fill="#ecf0f1" rx="1"/>
+                            <rect x="25" y="25" width="4" height="12" fill="#2c3e50"/>
+                            <rect x="35" y="25" width="4" height="12" fill="#2c3e50"/>
+                            <rect x="50" y="25" width="4" height="12" fill="#2c3e50"/>
+                            <rect x="60" y="25" width="4" height="12" fill="#2c3e50"/>
+                            <rect x="70" y="25" width="4" height="12" fill="#2c3e50"/>
+                        </svg>
+                    </div>
+                    <h2>Piano Lessons</h2>
+                </div>
+                
+                <div class="progress-section">
+                    <div class="progress-bar">
+                        <div class="progress-track">
+                            <div class="progress-dots" id="piano-progress"></div>
+                        </div>
+                        <div class="progress-count">
+                            <span id="piano-count">0</span> sessions
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="control-btn minus" onclick="updateCount('piano', -1)">−</button>
+                        <button class="control-btn plus" onclick="updateCount('piano', 1)">+</button>
+                    </div>
+                </div>
+                
+                <div class="discovery-section">
+                    <button class="discovery-btn" onclick="toggleVenues('piano')">
+                        🎼 Find places to play
+                    </button>
+                    <div class="venues-list" id="piano-venues" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- Pottery Section -->
+            <div class="activity-card pottery-card">
+                <div class="activity-header">
+                    <div class="activity-icon">
+                        <svg viewBox="0 0 100 60" class="icon">
+                            <circle cx="50" cy="45" r="20" fill="#8b4513" opacity="0.3"/>
+                            <path d="M35 35 Q35 25 45 25 Q55 25 55 30 Q60 35 60 40 Q60 45 55 45 L45 45 Q35 45 35 40 Z" fill="#d2691e"/>
+                            <ellipse cx="30" cy="38" rx="8" ry="3" fill="#deb887" opacity="0.7"/>
+                            <ellipse cx="70" cy="38" rx="8" ry="3" fill="#deb887" opacity="0.7"/>
+                        </svg>
+                    </div>
+                    <h2>Pottery Classes</h2>
+                </div>
+                
+                <div class="progress-section">
+                    <div class="progress-bar">
+                        <div class="progress-track">
+                            <div class="progress-dots" id="pottery-progress"></div>
+                        </div>
+                        <div class="progress-count">
+                            <span id="pottery-count">0</span> sessions
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="control-btn minus" onclick="updateCount('pottery', -1)">−</button>
+                        <button class="control-btn plus" onclick="updateCount('pottery', 1)">+</button>
+                    </div>
+                </div>
+                
+                <div class="discovery-section">
+                    <button class="discovery-btn" onclick="toggleVenues('pottery')">
+                        🏺 Find pottery studios
+                    </button>
+                    <div class="venues-list" id="pottery-venues" style="display: none;"></div>
+                </div>
+            </div>
+            
+            <!-- Pilates Section -->
+            <div class="activity-card pilates-card">
+                <div class="activity-header">
+                    <div class="activity-icon">
+                        <svg viewBox="0 0 100 60" class="icon">
+                            <circle cx="50" cy="15" r="8" fill="#9b59b6" opacity="0.8"/>
+                            <ellipse cx="50" cy="30" rx="12" ry="8" fill="#9b59b6" opacity="0.8"/>
+                            <ellipse cx="35" cy="28" rx="10" ry="3" fill="#9b59b6" opacity="0.6"/>
+                            <ellipse cx="65" cy="28" rx="10" ry="3" fill="#9b59b6" opacity="0.6"/>
+                            <ellipse cx="45" cy="45" rx="3" ry="12" fill="#9b59b6" opacity="0.8"/>
+                            <ellipse cx="55" cy="45" rx="3" ry="12" fill="#9b59b6" opacity="0.8"/>
+                        </svg>
+                    </div>
+                    <h2>Pilates Sessions</h2>
+                </div>
+                
+                <div class="progress-section">
+                    <div class="progress-bar">
+                        <div class="progress-track">
+                            <div class="progress-dots" id="pilates-progress"></div>
+                        </div>
+                        <div class="progress-count">
+                            <span id="pilates-count">0</span> sessions
+                        </div>
+                    </div>
+                    
+                    <div class="controls">
+                        <button class="control-btn minus" onclick="updateCount('pilates', -1)">−</button>
+                        <button class="control-btn plus" onclick="updateCount('pilates', 1)">+</button>
+                    </div>
+                </div>
+                
+                <div class="discovery-section">
+                    <button class="discovery-btn" onclick="toggleVenues('pilates')">
+                        🧘‍♀️ Find pilates studios
+                    </button>
+                    <div class="venues-list" id="pilates-venues" style="display: none;"></div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="motivation-section">
+            <div class="quote-card">
+                <p id="motivational-quote">"Every expert was once a beginner. Every pro was once an amateur."</p>
+            </div>
+        </div>
+        
+        <footer class="dashboard-footer">
+            <p>Keep exploring, keep growing 🌱</p>
+        </footer>
+    </div>
+    
+    <script src="script.js"></script>
+</body>
+</html>

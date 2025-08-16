@@ -1,0 +1,561 @@
+/* Reset and Base Styles */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    line-height: 1.6;
+    color: #2c3e50;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+}
+
+/* Login Page Styles */
+.login-page {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.login-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+    backdrop-filter: blur(10px);
+}
+
+.login-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.login-header p {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+    margin-bottom: 30px;
+}
+
+.hobby-icons {
+    display: flex;
+    justify-content: space-around;
+    margin: 40px 0;
+    gap: 20px;
+}
+
+.hobby-icon {
+    text-align: center;
+    opacity: 0;
+    animation: fadeInUp 0.8s ease forwards;
+}
+
+.hobby-icon:nth-child(1) { animation-delay: 0.2s; }
+.hobby-icon:nth-child(2) { animation-delay: 0.4s; }
+.hobby-icon:nth-child(3) { animation-delay: 0.6s; }
+
+.hobby-icon .icon {
+    width: 80px;
+    height: 50px;
+    margin-bottom: 10px;
+    transition: transform 0.3s ease;
+}
+
+.hobby-icon:hover .icon {
+    transform: scale(1.1);
+}
+
+.hobby-icon span {
+    display: block;
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #5a6c7d;
+}
+
+.piano-icon span { color: #2c3e50; }
+.pottery-icon span { color: #d2691e; }
+.pilates-icon span { color: #9b59b6; }
+
+.login-form {
+    margin: 30px 0;
+}
+
+.password-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+#password {
+    padding: 15px 20px;
+    border: 2px solid #e8ecf0;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    outline: none;
+    transition: border-color 0.3s ease;
+    text-align: center;
+}
+
+#password:focus {
+    border-color: #667eea;
+}
+
+.login-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    border-radius: 50px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.login-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+}
+
+.error-message {
+    color: #e74c3c;
+    font-size: 0.9rem;
+    margin-top: 10px;
+    min-height: 20px;
+}
+
+.login-footer p {
+    color: #95a5a6;
+    font-size: 0.9rem;
+    margin-top: 20px;
+}
+
+/* Dashboard Page Styles */
+.dashboard-page {
+    background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+    min-height: 100vh;
+    padding: 20px;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 40px;
+    position: relative;
+}
+
+.dashboard-header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.dashboard-header p {
+    color: #7f8c8d;
+    font-size: 1.1rem;
+}
+
+.logout-btn {
+    position: absolute;
+    top: 0;
+    right: 0;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid #e8ecf0;
+    padding: 8px 16px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+}
+
+.logout-btn:hover {
+    background: white;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.activities-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 30px;
+    margin-bottom: 40px;
+}
+
+.activity-card {
+    background: white;
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
+    border-left: 5px solid;
+}
+
+.activity-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+}
+
+.piano-card { border-left-color: #2c3e50; }
+.pottery-card { border-left-color: #d2691e; }
+.pilates-card { border-left-color: #9b59b6; }
+
+.activity-header {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+    gap: 15px;
+}
+
+.activity-icon .icon {
+    width: 60px;
+    height: 36px;
+}
+
+.activity-header h2 {
+    font-size: 1.5rem;
+    color: #2c3e50;
+}
+
+.progress-section {
+    margin-bottom: 25px;
+}
+
+.progress-bar {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 15px;
+}
+
+.progress-track {
+    height: 40px;
+    background: #e9ecef;
+    border-radius: 20px;
+    position: relative;
+    margin-bottom: 15px;
+    overflow: hidden;
+}
+
+.progress-dots {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    padding: 0 10px;
+    gap: 8px;
+}
+
+.progress-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #dee2e6;
+    transition: all 0.3s ease;
+}
+
+.progress-dot.filled {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    transform: scale(1.2);
+    box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+}
+
+.progress-count {
+    text-align: center;
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: #495057;
+}
+
+.controls {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+}
+
+.control-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    font-size: 1.5rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.control-btn.minus {
+    background: #e74c3c;
+    color: white;
+}
+
+.control-btn.plus {
+    background: #27ae60;
+    color: white;
+}
+
+.control-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.control-btn:active {
+    transform: scale(0.95);
+}
+
+.discovery-section {
+    border-top: 1px solid #e9ecef;
+    padding-top: 20px;
+}
+
+.discovery-btn {
+    width: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 12px 20px;
+    border-radius: 25px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: 15px;
+}
+
+.discovery-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+}
+
+.venues-list {
+    background: #f8f9fa;
+    border-radius: 15px;
+    padding: 20px;
+    margin-top: 15px;
+}
+
+.venue-item {
+    background: white;
+    padding: 15px;
+    border-radius: 10px;
+    margin-bottom: 12px;
+    border-left: 3px solid #667eea;
+    transition: all 0.3s ease;
+}
+
+.venue-item:hover {
+    transform: translateX(5px);
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.venue-item:last-child {
+    margin-bottom: 0;
+}
+
+.venue-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 8px;
+    gap: 10px;
+}
+
+.venue-name {
+    font-weight: 600;
+    color: #2c3e50;
+    flex: 1;
+}
+
+.venue-buttons {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+}
+
+.venue-btn {
+    padding: 4px 8px;
+    border: none;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-weight: 500;
+}
+
+.website-btn {
+    background: #3498db;
+    color: white;
+}
+
+.website-btn:hover {
+    background: #2980b9;
+    transform: translateY(-1px);
+}
+
+.maps-btn {
+    background: #e74c3c;
+    color: white;
+}
+
+.maps-btn:hover {
+    background: #c0392b;
+    transform: translateY(-1px);
+}
+
+.venue-description {
+    color: #6c757d;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    margin-bottom: 6px;
+}
+
+.venue-address {
+    color: #95a5a6;
+    font-size: 0.8rem;
+    font-style: italic;
+}
+
+.motivation-section {
+    text-align: center;
+    margin: 40px 0;
+}
+
+.quote-card {
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 20px;
+    padding: 30px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.quote-card p {
+    font-size: 1.2rem;
+    font-style: italic;
+    color: #495057;
+    line-height: 1.6;
+}
+
+.dashboard-footer {
+    text-align: center;
+    margin-top: 40px;
+}
+
+.dashboard-footer p {
+    color: #95a5a6;
+    font-size: 1rem;
+}
+
+/* Animations */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+.celebration {
+    animation: pulse 0.6s ease-in-out;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .login-container {
+        padding: 30px 20px;
+    }
+    
+    .login-header h1 {
+        font-size: 2rem;
+    }
+    
+    .hobby-icons {
+        flex-direction: column;
+        align-items: center;
+        gap: 15px;
+    }
+    
+    .dashboard-header h1 {
+        font-size: 2rem;
+    }
+    
+    .logout-btn {
+        position: static;
+        margin-top: 20px;
+    }
+    
+    .activities-grid {
+        grid-template-columns: 1fr;
+        gap: 20px;
+    }
+    
+    .activity-card {
+        padding: 20px;
+    }
+    
+    .controls {
+        gap: 15px;
+    }
+    
+    .control-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .hobby-icon .icon {
+        width: 60px;
+        height: 36px;
+    }
+    
+    .activity-header {
+        flex-direction: column;
+        text-align: center;
+        gap: 10px;
+    }
+    
+    .password-container {
+        gap: 20px;
+    }
+    
+    #password, .login-btn {
+        font-size: 1rem;
+    }
+    
+    .venue-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .venue-buttons {
+        align-self: flex-end;
+    }
+}
