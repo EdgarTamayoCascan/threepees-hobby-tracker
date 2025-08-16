@@ -13,8 +13,15 @@ let db = null;
 let unsubscribe = null;
 const USER_ID = 'cat-threepees-user'; // Cat's unique ID
 
-// Firebase Config - Loaded from external file (not committed to git)
-// Note: window.firebaseConfig is loaded from firebase-config.js
+// Firebase Config - API key is safe to be public for Firebase
+const firebaseConfig = {
+    apiKey: "AIzaSyCwn04t3pnKD7P7iuPO2Ug534uoo1TctE4",
+    authDomain: "threepees-hobby-tracker.firebaseapp.com",
+    projectId: "threepees-hobby-tracker",
+    storageBucket: "threepees-hobby-tracker.firebasestorage.app",
+    messagingSenderId: "37202864642",
+    appId: "1:37202864642:web:e115cb9d5fc504a2c6951b"
+};
 
 async function initFirestore() {
     try {
@@ -29,18 +36,14 @@ async function initFirestore() {
         // Initialize Firebase
         if (!firebase.apps.length) {
             console.log('🔥 Initializing Firebase app...');
-            if (window.firebaseConfig) {
-                firebase.initializeApp(window.firebaseConfig);
-            } else {
-                throw new Error('Firebase config not loaded');
-            }
+            firebase.initializeApp(firebaseConfig);
         }
         
         db = firebase.firestore();
         isFirestoreEnabled = true;
         
         console.log('🔥 Firestore initialized successfully');
-        console.log('🔥 Config project ID:', window.firebaseConfig?.projectId);
+        console.log('🔥 Config project ID:', firebaseConfig.projectId);
         
         return true;
     } catch (error) {

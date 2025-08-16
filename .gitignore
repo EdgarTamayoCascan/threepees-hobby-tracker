@@ -1,6 +1,9 @@
 # Firebase Configuration (contains API keys)
 firebase-config.js
 
+# Build output
+dist/
+
 # Node modules
 node_modules/
 
