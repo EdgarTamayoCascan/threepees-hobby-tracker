@@ -13,14 +13,14 @@ let db = null;
 let unsubscribe = null;
 const USER_ID = 'cat-threepees-user'; // Cat's unique ID
 
-// Firebase Config (you'll need to replace with your actual config)
+// Firebase Config (from your Firebase project)
 const firebaseConfig = {
-    apiKey: "your-api-key-here",
-    authDomain: "your-project.firebaseapp.com",
-    projectId: "your-project-id",
-    storageBucket: "your-project.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "your-app-id"
+    apiKey: "AIzaSyCwn04t3pnKD7P7iuPO2Ug534uoo1TctE4",
+    authDomain: "threepees-hobby-tracker.firebaseapp.com",
+    projectId: "threepees-hobby-tracker",
+    storageBucket: "threepees-hobby-tracker.firebasestorage.app",
+    messagingSenderId: "37202864642",
+    appId: "1:37202864642:web:e115cb9d5fc504a2c6951b"
 };
 
 async function initFirestore() {
