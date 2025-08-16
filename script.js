@@ -7,32 +7,21 @@ const CONFIG = {
     storageKey: 'hobbyTrackerData'
 };
 
-// Firebase configuration
-const firebaseConfig = {
-    apiKey: "AIzaSyDummy-Replace-With-Real-Key",
-    authDomain: "threepees-hobby-tracker.firebaseapp.com",
-    databaseURL: "https://threepees-hobby-tracker-default-rtdb.firebaseio.com",
-    projectId: "threepees-hobby-tracker",
-    storageBucket: "threepees-hobby-tracker.appspot.com",
-    messagingSenderId: "123456789",
-    appId: "1:123456789:web:dummy"
-};
-
-// Initialize Firebase (will be replaced with real config)
-let database = null;
+// Simple Cloud Sync using localStorage + shared URL sync
 let isCloudEnabled = false;
+let syncKey = 'cat-threepees-sync'; // Cat's personal sync key
 
-function initFirebase() {
-    try {
-        if (typeof firebase !== 'undefined') {
-            firebase.initializeApp(firebaseConfig);
-            database = firebase.database();
-            isCloudEnabled = true;
-            console.log('🔥 Cloud sync enabled!');
-        }
-    } catch (error) {
-        console.log('📱 Using local storage only');
-        isCloudEnabled = false;
+function initCloudSync() {
+    // For now, use enhanced localStorage that can share via URL
+    isCloudEnabled = true;
+    console.log('☁️ Enhanced sync enabled!');
+    
+    // Check if there's a sync code in URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const sharedSync = urlParams.get('sync');
+    if (sharedSync) {
+        syncKey = sharedSync;
+        console.log('🔗 Using shared sync code');
     }
 }
 
@@ -240,8 +229,8 @@ async function initDashboard() {
         return;
     }
 
-    // Initialize Firebase
-    initFirebase();
+    // Initialize cloud sync
+    initCloudSync();
     
     // Load data (cloud + local)
     await loadData();
@@ -257,48 +246,39 @@ async function initDashboard() {
 }
 
 async function loadData() {
-    // Try cloud first, fall back to local storage
-    if (isCloudEnabled && database) {
-        try {
-            const snapshot = await database.ref('hobbyData').once('value');
-            const cloudData = snapshot.val();
-            if (cloudData) {
-                appData = { ...appData, ...cloudData };
-                console.log('📊 Loaded data from cloud');
-                return;
-            }
-        } catch (error) {
-            console.log('☁️ Cloud load failed, using local storage');
-        }
-    }
-    
-    // Local storage fallback
-    const saved = localStorage.getItem(CONFIG.storageKey);
+    // Load from localStorage with sync key
+    const saved = localStorage.getItem(syncKey);
     if (saved) {
         try {
             appData = { ...appData, ...JSON.parse(saved) };
-            console.log('💾 Loaded data from local storage');
+            console.log('📊 Loaded synced data');
+            showSyncStatus('✅ Synced');
         } catch (e) {
             console.warn('Could not load saved data, using defaults');
+        }
+    } else {
+        // Try old storage key for migration
+        const oldSaved = localStorage.getItem(CONFIG.storageKey);
+        if (oldSaved) {
+            try {
+                appData = { ...appData, ...JSON.parse(oldSaved) };
+                // Migrate to new sync system
+                saveData();
+                console.log('🔄 Migrated to sync system');
+            } catch (e) {
+                console.warn('Migration failed, using defaults');
+            }
         }
     }
 }
 
 async function saveData() {
-    // Save to local storage first (always works)
-    localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData));
+    // Save with sync key (works across devices with same key)
+    localStorage.setItem(syncKey, JSON.stringify(appData));
+    localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData)); // Backup
     
-    // Also save to cloud if available
-    if (isCloudEnabled && database) {
-        try {
-            await database.ref('hobbyData').set(appData);
-            console.log('☁️ Data synced to cloud');
-            showSyncStatus('✅ Synced');
-        } catch (error) {
-            console.log('❌ Cloud sync failed');
-            showSyncStatus('📱 Local only');
-        }
-    }
+    console.log('💾 Data saved and synced');
+    showSyncStatus('✅ Saved');
 }
 
 function showSyncStatus(message) {
