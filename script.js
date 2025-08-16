@@ -25,14 +25,17 @@ const firebaseConfig = {
 
 async function initFirestore() {
     try {
+        console.log('🔥 Starting Firebase initialization...');
+        
         // Check if Firebase is available
         if (typeof firebase === 'undefined') {
-            console.log('⚠️ Firebase not loaded, using local storage');
+            console.log('⚠️ Firebase not loaded, using local storage only');
             return false;
         }
 
         // Initialize Firebase
         if (!firebase.apps.length) {
+            console.log('🔥 Initializing Firebase app...');
             firebase.initializeApp(firebaseConfig);
         }
         
@@ -40,12 +43,12 @@ async function initFirestore() {
         isFirestoreEnabled = true;
         
         console.log('🔥 Firestore initialized successfully');
-        
-        // Don't set up listener here - do it after initial data load
+        console.log('🔥 Config project ID:', firebaseConfig.projectId);
         
         return true;
     } catch (error) {
         console.error('🔥 Firestore init failed:', error);
+        isFirestoreEnabled = false;
         return false;
     }
 }
@@ -188,7 +191,8 @@ let appData = {
 document.addEventListener('DOMContentLoaded', async function() {
     if (window.location.pathname.includes('dashboard.html')) {
         // Initialize Firestore first, then dashboard
-        await initFirestore();
+        const firestoreReady = await initFirestore();
+        console.log('🔥 Firestore ready:', firestoreReady);
         initDashboard();
     } else {
         initLogin();
@@ -256,9 +260,6 @@ async function initDashboard() {
         return;
     }
 
-    // Initialize cloud sync
-    initCloudSync();
-    
     // Load data (cloud + local)
     await loadData();
     
@@ -286,7 +287,7 @@ function setupRealtimeSync() {
             // Only update if data is different (avoid infinite loops)
             if (JSON.stringify(appData) !== JSON.stringify(firestoreData)) {
                 appData = { ...appData, ...firestoreData };
-                updateProgressBars();
+                updateAllDisplays();
                 showSyncStatus('🔥 Synced');
             }
         } else {
@@ -299,9 +300,33 @@ function setupRealtimeSync() {
 }
 
 async function loadData() {
+    console.log('📊 Starting loadData...');
+    console.log('🔥 isFirestoreEnabled:', isFirestoreEnabled);
+    console.log('🔥 db available:', !!db);
+    
     showSyncStatus('🔄 Loading...');
     
-    // Try Firestore first
+    // Always check local storage first to get any existing data
+    const saved = localStorage.getItem(CONFIG.storageKey);
+    let hasLocalData = false;
+    
+    console.log('💾 Checking localStorage...');
+    console.log('💾 Saved data raw:', saved);
+    
+    if (saved) {
+        try {
+            const parsedData = JSON.parse(saved);
+            appData = { ...appData, ...parsedData };
+            hasLocalData = true;
+            console.log('💾 Found local data:', appData);
+        } catch (e) {
+            console.warn('Could not parse local data:', e);
+        }
+    } else {
+        console.log('💾 No local data found');
+    }
+    
+    // Then try Firestore
     if (isFirestoreEnabled && db) {
         try {
             const userRef = db.collection('userData').doc(USER_ID);
@@ -309,18 +334,40 @@ async function loadData() {
             
             if (doc.exists) {
                 const firestoreData = doc.data();
-                appData = { ...appData, ...firestoreData };
-                console.log('🔥 Loaded from Firestore:', appData);
-                showSyncStatus('🔥 Cloud loaded');
+                
+                // Check if Firestore has more recent/complete data
+                const firestoreTotal = (firestoreData.piano || 0) + (firestoreData.pottery || 0) + (firestoreData.pilates || 0);
+                const localTotal = appData.piano + appData.pottery + appData.pilates;
+                
+                if (firestoreTotal >= localTotal) {
+                    // Firestore has more or equal data, use it
+                    appData = { ...appData, ...firestoreData };
+                    console.log('🔥 Loaded from Firestore (has more data):', appData);
+                    showSyncStatus('🔥 Cloud loaded');
+                } else {
+                    // Local has more data, sync it to Firestore
+                    console.log('💾 Using local data (has more):', appData);
+                    await saveToFirestore();
+                    showSyncStatus('📱 Local synced');
+                }
                 
                 // Save to local as backup
                 localStorage.setItem(CONFIG.storageKey, JSON.stringify(appData));
                 
-                // NOW set up real-time listener after successful load
+                // Set up real-time listener
                 setupRealtimeSync();
                 return;
             } else {
-                console.log('🔥 No Firestore data found, checking local storage');
+                console.log('🔥 No Firestore data found');
+                
+                // If we have local data, sync it to Firestore
+                if (hasLocalData) {
+                    console.log('💾 Syncing local data to Firestore');
+                    await saveToFirestore();
+                    showSyncStatus('📱 Local synced');
+                    setupRealtimeSync();
+                    return;
+                }
             }
         } catch (error) {
             console.error('🔥 Firestore load error:', error);
@@ -328,27 +375,14 @@ async function loadData() {
         }
     }
     
-    // Fallback to local storage
-    const saved = localStorage.getItem(CONFIG.storageKey);
-    if (saved) {
-        try {
-            appData = { ...appData, ...JSON.parse(saved) };
-            console.log('💾 Loaded from local storage');
-            showSyncStatus('📱 Local data');
-            
-            // If we have local data but Firestore is enabled, sync it up
-            if (isFirestoreEnabled && db) {
-                await saveToFirestore();
-                // Set up real-time listener after we've synced our local data
-                setupRealtimeSync();
-            }
-        } catch (e) {
-            console.warn('Could not load saved data, using defaults');
-            showSyncStatus('🆕 New start');
+    // Final status update
+    if (hasLocalData) {
+        showSyncStatus('📱 Local data');
+        if (isFirestoreEnabled && db) {
+            setupRealtimeSync();
         }
     } else {
         showSyncStatus('🆕 New start');
-        // For new users, set up real-time listener too
         if (isFirestoreEnabled && db) {
             setupRealtimeSync();
         }
